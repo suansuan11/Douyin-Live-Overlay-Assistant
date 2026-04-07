@@ -32,12 +32,20 @@ function eventContainsKeyword(event: LiveEvent, keywords: readonly string[]): bo
 export function applyEventFilters(events: readonly LiveEvent[], config: AppConfig): LiveEvent[] {
   const { filters } = config.overlay;
   return events.filter((event) => {
-    if (filters.showOnly === 'comments' && event.type !== 'comment') return false;
-    if (filters.showOnly === 'gifts' && event.type !== 'gift') return false;
+    if ((filters.showOnly === 'comment' || filters.showOnly === 'comments') && event.type !== 'comment') return false;
+    if ((filters.showOnly === 'gift' || filters.showOnly === 'gifts') && event.type !== 'gift') return false;
+    if (filters.showOnly === 'like' && event.type !== 'like') return false;
+    if (filters.showOnly === 'follow' && event.type !== 'follow') return false;
+    if (filters.showOnly === 'fans_club' && event.type !== 'fans_club') return false;
+    if (filters.showOnly === 'enter' && event.type !== 'enter') return false;
     if (filters.showOnly === 'system' && event.type !== 'system') return false;
     if (eventContainsKeyword(event, filters.blockedKeywords)) return false;
     return true;
   });
+}
+
+function applyEventBlocklist(events: readonly LiveEvent[], config: AppConfig): LiveEvent[] {
+  return events.filter((event) => !eventContainsKeyword(event, config.overlay.filters.blockedKeywords));
 }
 
 export const useAppStore = create<AppStore>((set) => ({
@@ -67,10 +75,7 @@ export const useAppStore = create<AppStore>((set) => ({
   setConnection: (connection) => set({ connection }),
   pushEvents: (incoming) =>
     set((state) => {
-      if (state.config.overlay.pauseScroll) {
-        return state;
-      }
-      const filtered = applyEventFilters(incoming, state.config);
+      const filtered = applyEventBlocklist(incoming, state.config);
       if (filtered.length === 0) {
         return state;
       }

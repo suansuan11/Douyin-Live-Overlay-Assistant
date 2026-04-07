@@ -1,7 +1,17 @@
 export const CONFIG_VERSION = 2;
 
-export type OverlayLayout = 'list' | 'gift' | 'minimal';
-export type ShowOnlyFilter = 'all' | 'comments' | 'gifts' | 'system';
+export type OverlayLayout = 'list' | 'gift' | 'minimal' | 'debug';
+export type ShowOnlyFilter =
+  | 'all'
+  | 'comment'
+  | 'comments'
+  | 'like'
+  | 'gift'
+  | 'gifts'
+  | 'follow'
+  | 'fans_club'
+  | 'enter'
+  | 'system';
 export type DataSourceMode = 'mock' | 'websocket' | 'bridge' | 'douyinOfficial';
 
 export interface AppBehaviorConfig {
@@ -39,6 +49,7 @@ export interface OverlayConfig {
   scale: number;
   maxEvents: number;
   pauseScroll: boolean;
+  autoScroll: boolean;
   filters: OverlayFilters;
   likeAggregation: LikeAggregationConfig;
 }
@@ -59,6 +70,7 @@ export interface HotkeyConfig {
   layoutList: string;
   layoutGift: string;
   layoutMinimal: string;
+  layoutDebug: string;
 }
 
 export interface AppConfig {
@@ -94,6 +106,7 @@ export const DEFAULT_CONFIG: AppConfig = {
     scale: 1,
     maxEvents: 500,
     pauseScroll: false,
+    autoScroll: true,
     filters: {
       blockedKeywords: [],
       highlightKeywords: ['礼物', '老板'],
@@ -113,12 +126,13 @@ export const DEFAULT_CONFIG: AppConfig = {
   },
   hotkeys: {
     toggleOverlay: 'CommandOrControl+Alt+O',
-    toggleClickThrough: 'CommandOrControl+Alt+L',
+    toggleClickThrough: 'CommandOrControl+Shift+Alt+E',
     opacityUp: 'CommandOrControl+Alt+Up',
     opacityDown: 'CommandOrControl+Alt+Down',
     layoutList: 'CommandOrControl+Alt+1',
     layoutGift: 'CommandOrControl+Alt+2',
-    layoutMinimal: 'CommandOrControl+Alt+3'
+    layoutMinimal: 'CommandOrControl+Alt+3',
+    layoutDebug: 'CommandOrControl+Alt+4'
   }
 };
 
@@ -164,13 +178,35 @@ function normalizeDataMode(value: unknown, legacyMockMode: unknown): DataSourceM
 }
 
 function normalizeLayout(value: unknown): OverlayLayout {
-  return value === 'gift' || value === 'minimal' || value === 'list' ? value : DEFAULT_CONFIG.overlay.layout;
+  return value === 'gift' || value === 'minimal' || value === 'list' || value === 'debug'
+    ? value
+    : DEFAULT_CONFIG.overlay.layout;
 }
 
 function normalizeShowOnly(value: unknown): ShowOnlyFilter {
-  return value === 'comments' || value === 'gifts' || value === 'system' || value === 'all'
+  return value === 'comment' ||
+    value === 'comments' ||
+    value === 'like' ||
+    value === 'gift' ||
+    value === 'gifts' ||
+    value === 'follow' ||
+    value === 'fans_club' ||
+    value === 'enter' ||
+    value === 'system' ||
+    value === 'all'
     ? value
     : DEFAULT_CONFIG.overlay.filters.showOnly;
+}
+
+function normalizeHotkeys(value: AppConfig['hotkeys']): AppConfig['hotkeys'] {
+  return {
+    ...DEFAULT_CONFIG.hotkeys,
+    ...value,
+    toggleClickThrough:
+      value.toggleClickThrough === 'CommandOrControl+Alt+L'
+        ? DEFAULT_CONFIG.hotkeys.toggleClickThrough
+        : value.toggleClickThrough || DEFAULT_CONFIG.hotkeys.toggleClickThrough
+  };
 }
 
 export function migrateConfig(raw: unknown): AppConfig {
@@ -203,6 +239,7 @@ export function migrateConfig(raw: unknown): AppConfig {
       scale: clampNumber(merged.overlay.scale, DEFAULT_CONFIG.overlay.scale, 0.75, 1.5),
       maxEvents: Math.round(clampNumber(merged.overlay.maxEvents, DEFAULT_CONFIG.overlay.maxEvents, 100, 2000)),
       pauseScroll: Boolean(merged.overlay.pauseScroll),
+      autoScroll: merged.overlay.autoScroll !== false,
       filters: {
         blockedKeywords: normalizeStringArray(merged.overlay.filters.blockedKeywords, []),
         highlightKeywords: normalizeStringArray(
@@ -229,9 +266,6 @@ export function migrateConfig(raw: unknown): AppConfig {
       reconnectMinMs: Math.round(clampNumber(merged.data.reconnectMinMs, DEFAULT_CONFIG.data.reconnectMinMs, 250, 60000)),
       reconnectMaxMs: Math.round(clampNumber(merged.data.reconnectMaxMs, DEFAULT_CONFIG.data.reconnectMaxMs, 1000, 300000))
     },
-    hotkeys: {
-      ...DEFAULT_CONFIG.hotkeys,
-      ...merged.hotkeys
-    }
+    hotkeys: normalizeHotkeys(merged.hotkeys)
   };
 }

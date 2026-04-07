@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { applyEventFilters } from '../src/renderer/store';
+import { applyEventFilters, useAppStore } from '../src/renderer/store';
 import { DEFAULT_CONFIG, type AppConfig } from '../src/shared/config';
 import type { LiveEvent } from '../src/shared/events';
 
@@ -41,5 +41,49 @@ describe('renderer event filters', () => {
     ];
 
     expect(applyEventFilters(events, config).map((event) => event.payload.text)).toEqual(['系统消息']);
+  });
+
+  it('keeps incoming events in cache while refresh is paused', () => {
+    useAppStore.setState({
+      config: {
+        ...DEFAULT_CONFIG,
+        overlay: {
+          ...DEFAULT_CONFIG.overlay,
+          pauseScroll: true,
+          maxEvents: 3
+        }
+      },
+      events: []
+    });
+
+    useAppStore.getState().pushEvents([
+      makeEvent('comment', 'first'),
+      makeEvent('like', 'second'),
+      makeEvent('follow', 'third'),
+      makeEvent('fans_club', 'fourth')
+    ]);
+
+    expect(useAppStore.getState().events.map((event) => event.payload.text)).toEqual(['second', 'third', 'fourth']);
+  });
+
+  it('filters bridge event types individually', () => {
+    const config: AppConfig = {
+      ...DEFAULT_CONFIG,
+      overlay: {
+        ...DEFAULT_CONFIG.overlay,
+        filters: {
+          blockedKeywords: [],
+          highlightKeywords: [],
+          showOnly: 'like'
+        }
+      }
+    };
+
+    expect(
+      applyEventFilters(
+        [makeEvent('comment', 'comment'), makeEvent('like', 'like'), makeEvent('gift', 'gift'), makeEvent('follow', 'follow')],
+        config
+      ).map((event) => event.type)
+    ).toEqual(['like']);
   });
 });

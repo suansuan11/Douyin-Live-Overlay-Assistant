@@ -15,7 +15,7 @@ Windows 10/11 桌面端直播悬浮窗工具。它提供透明、置顶、默认
 全局快捷键、热键注册失败提示
 Mock / WebSocket / Bridge Receiver / Official Adapter Shell 数据源模式
 WebSocket 重连、连接状态、最后错误、事件速率
-list / gift / minimal 三种布局
+list / gift / minimal / debug 四种布局
 过滤关键词、高亮关键词、仅评论/仅礼物/仅系统、点赞聚合开关
 配置版本迁移、配置导入导出、日志落盘与日志目录按钮
 Bridge 示例 server 和 sample events
@@ -58,19 +58,31 @@ npm install
 npm run dev
 ```
 
-默认会以内置 Mock 模式显示事件。按 `Ctrl+Alt+L` 进入编辑模式，设置数据源、地址、布局、透明度、字号、过滤器、自启和托盘行为。
+默认会以内置 Mock 模式显示事件。按 `Ctrl+Shift+Alt+E` 进入编辑模式，设置数据源、地址、布局、透明度、字号、过滤器、自启和托盘行为。
 
 ## 常用快捷键
 
 ```text
 Ctrl+Alt+O      显示 / 隐藏悬浮窗
-Ctrl+Alt+L      编辑模式 / 直播穿透模式
+Ctrl+Shift+Alt+E 编辑模式 / 直播穿透模式
 Ctrl+Alt+Up     提高透明度
 Ctrl+Alt+Down   降低透明度
 Ctrl+Alt+1      list 布局
 Ctrl+Alt+2      gift 布局
 Ctrl+Alt+3      minimal 布局
+Ctrl+Alt+4      debug 布局
 ```
+
+## Overlay layouts
+
+```text
+list     Stable history view for normal event review. It supports manual scrollback, auto-scroll toggle, and Back to bottom.
+debug    Live debugging view for Bridge Receiver verification. It shows status, rate, cache size, per-type counts, filters, pause refresh, clear, and copy JSON.
+minimal  Compact live view for production streams. It keeps the current statistics and latest highlighted event.
+gift     High-priority gift/follow view for live use.
+```
+
+When Pause refresh is enabled, incoming events still enter the cache. The list/debug view freezes until refresh is resumed, so you can inspect old events without losing new data.
 
 如果快捷键被系统或游戏占用，设置面板会显示热键注册失败提示，同时主进程日志会记录失败项。
 
@@ -270,9 +282,9 @@ Windows 真机建议使用 Windows 10/11 的无边框窗口化游戏模式测试
 Windows 使用建议：
 
 ```text
-1. 安装或启动应用后，先按 Ctrl+Alt+L 进入编辑模式。
+1. 安装或启动应用后，先按 Ctrl+Shift+Alt+E 进入编辑模式。
 2. 把 Overlay 拖到游戏画面附近，设置透明度、字号和布局。
-3. 再按 Ctrl+Alt+L 回到直播穿透模式，确认鼠标点击能落到游戏窗口。
+3. 再按 Ctrl+Shift+Alt+E 回到直播穿透模式，确认鼠标点击能落到游戏窗口。
 4. 游戏使用“无边框窗口化/窗口化全屏”，不要使用独占全屏。
 5. 如果热键被游戏拦截，在设置面板查看热键状态并修改配置。
 ```
@@ -336,7 +348,7 @@ app:log                            渲染进程日志上报
 鼠标点到悬浮窗：
 
 ```text
-按 Ctrl+Alt+L 退出编辑模式，回到直播穿透模式。
+按 Ctrl+Shift+Alt+E 退出编辑模式，回到直播穿透模式。
 设置面板中确认 clickThrough 已恢复。
 ```
 

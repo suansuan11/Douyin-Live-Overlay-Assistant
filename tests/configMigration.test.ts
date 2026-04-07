@@ -56,4 +56,25 @@ describe('config migration', () => {
     expect(migrated.data.reconnectMinMs).toBe(250);
     expect(migrated.data.reconnectMaxMs).toBe(1000);
   });
+
+  it('supports debug layout and upgrades the old edit hotkey default', () => {
+    const migrated = migrateConfig({
+      version: CONFIG_VERSION,
+      overlay: {
+        layout: 'debug',
+        autoScroll: false,
+        filters: {
+          showOnly: 'follow'
+        }
+      },
+      hotkeys: {
+        toggleClickThrough: 'CommandOrControl+Alt+L'
+      }
+    });
+
+    expect(migrated.overlay.layout).toBe('debug');
+    expect(migrated.overlay.autoScroll).toBe(false);
+    expect(migrated.overlay.filters.showOnly).toBe('follow');
+    expect(migrated.hotkeys.toggleClickThrough).toBe(DEFAULT_CONFIG.hotkeys.toggleClickThrough);
+  });
 });

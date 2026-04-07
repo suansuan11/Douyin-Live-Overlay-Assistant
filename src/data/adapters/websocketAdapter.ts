@@ -114,6 +114,9 @@ export class WebSocketAdapter implements LiveEventAdapter {
     if (this.stopped) {
       return;
     }
+    if (this.reconnectTimer) {
+      return;
+    }
     this.retryAttempt += 1;
     const reconnectMinMs = this.config.reconnectMinMs ?? 500;
     const reconnectMaxMs = this.config.reconnectMaxMs ?? 10_000;
@@ -123,7 +126,10 @@ export class WebSocketAdapter implements LiveEventAdapter {
       connecting: true,
       retryAttempt: this.retryAttempt
     });
-    this.reconnectTimer = setTimeout(() => this.connect(), delay);
+    this.reconnectTimer = setTimeout(() => {
+      this.reconnectTimer = null;
+      this.connect();
+    }, delay);
   }
 
   private handleError(error: unknown): void {
@@ -135,5 +141,6 @@ export class WebSocketAdapter implements LiveEventAdapter {
       lastError: normalized.message,
       retryAttempt: this.retryAttempt
     });
+    this.scheduleReconnect();
   }
 }

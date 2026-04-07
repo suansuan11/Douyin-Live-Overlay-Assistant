@@ -312,6 +312,7 @@ function registerHotkeys(config: AppConfig): void {
   bind('layoutList', config.hotkeys.layoutList, () => updateOverlayState({ layout: 'list' }));
   bind('layoutGift', config.hotkeys.layoutGift, () => updateOverlayState({ layout: 'gift' }));
   bind('layoutMinimal', config.hotkeys.layoutMinimal, () => updateOverlayState({ layout: 'minimal' }));
+  bind('layoutDebug', config.hotkeys.layoutDebug, () => updateOverlayState({ layout: 'debug' }));
 }
 
 function createTray(): void {
@@ -398,7 +399,7 @@ function registerIpc(): void {
     return updateOverlayState({ clickThrough, editMode: !clickThrough });
   });
   ipcMain.handle(IPC_CHANNELS.overlaySetLayout, (_event, layout: unknown) => {
-    if (layout !== 'list' && layout !== 'gift' && layout !== 'minimal') {
+    if (layout !== 'list' && layout !== 'gift' && layout !== 'minimal' && layout !== 'debug') {
       throw new Error('overlay:set-layout received invalid layout');
     }
     return updateOverlayState({ layout: layout as OverlayLayout });

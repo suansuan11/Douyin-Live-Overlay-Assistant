@@ -1,4 +1,5 @@
 import { createServer } from 'node:net';
+import { once } from 'node:events';
 import { WebSocketServer } from 'ws';
 import { describe, expect, it } from 'vitest';
 import { WebSocketAdapter } from '../src/data/adapters/websocketAdapter';
@@ -55,6 +56,7 @@ describe('WebSocketAdapter reconnect', () => {
     server.on('connection', (socket) => {
       socket.send(JSON.stringify(makeEvent('reconnect-event')));
     });
+    await once(server, 'listening');
 
     await expect
       .poll(() => events.some((event) => event.eventId === 'reconnect-event'), { timeout: 1000, interval: 25 })
