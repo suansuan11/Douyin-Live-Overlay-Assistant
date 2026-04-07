@@ -1,0 +1,38 @@
+{
+  "window": {
+    "x": 80,
+    "y": 80,
+    "width": 440,
+    "height": 680,
+    "opacity": 0.86,
+    "alwaysOnTop": true,
+    "clickThrough": true,
+    "visible": true
+  },
+  "overlay": {
+    "layout": "list",
+    "fontSize": 16,
+    "scale": 1,
+    "maxEvents": 500,
+    "filters": {
+      "blockedKeywords": ["广告", "刷屏"],
+      "highlightKeywords": ["老板", "主播"],
+      "showOnly": "all"
+    }
+  },
+  "data": {
+    "wsUrl": "ws://127.0.0.1:17890",
+    "mockMode": true,
+    "reconnectMinMs": 500,
+    "reconnectMaxMs": 10000
+  },
+  "hotkeys": {
+    "toggleOverlay": "CommandOrControl+Alt+O",
+    "toggleClickThrough": "CommandOrControl+Alt+L",
+    "opacityUp": "CommandOrControl+Alt+Up",
+    "opacityDown": "CommandOrControl+Alt+Down",
+    "layoutList": "CommandOrControl+Alt+1",
+    "layoutGift": "CommandOrControl+Alt+2",
+    "layoutMinimal": "CommandOrControl+Alt+3"
+  }
+}
