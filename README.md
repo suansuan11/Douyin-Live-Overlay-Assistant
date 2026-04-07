@@ -12,7 +12,7 @@ Windows 桌面端直播辅助悬浮窗。当前一期不接真实抖音接口，
 ├── mock-server/              # 本地 WebSocket mock server
 ├── scripts/                  # Electron 构建与开发启动脚本
 ├── src/
-│   ├── data/                 # 事件模型校验、去重、聚合、WebSocket/mock 客户端、adapter 接口
+│   ├── data/                 # 事件模型校验、去重、聚合、adapter 接入层
 │   ├── renderer/             # React UI、Zustand store、样式
 │   └── shared/               # 主进程/渲染进程共享类型、配置、IPC channel
 ├── tests/                    # Vitest 数据层测试
@@ -28,7 +28,7 @@ Windows 桌面端直播辅助悬浮窗。当前一期不接真实抖音接口，
 
 渲染进程只负责显示：React + Zustand 维护配置、连接状态和最近事件列表，通过 preload 暴露的 `electronBridge` 调用主进程能力。
 
-数据层与显示层解耦：`LiveEventClient` 接收 mock 或本地 WebSocket JSON，进入 `EventPipeline` 做格式校验、去重、点赞聚合和 ring buffer 限制，再推送给 Zustand。`src/data/adapters.ts` 预留官方平台 adapter 接口。
+数据层与显示层解耦：`LiveEventClient` 只依赖 `src/data/adapters/` 下的 adapter 工厂，不直接写死 mock、WebSocket 或官方平台逻辑。adapter 输出统一 `LiveEvent` 后进入 `EventPipeline` 做格式校验、去重、点赞聚合和 ring buffer 限制，再推送给 Zustand。
 
 ## 3. 关键风险点
 
@@ -114,6 +114,87 @@ npm run dist
 ```
 
 `pack` 生成未安装目录，`dist` 生成 Windows 安装包/portable 包。macOS/Linux 开发机可执行构建校验，但 Windows 行为请在 Windows 10/11 上实测。
+
+## 如何接入官方平台数据
+
+当前项目已预留官方直播数据 adapter，但不包含任何私有抓包、逆向协议或伪造平台接口细节。相关文件：
+
+```text
+src/data/adapters/types.ts
+src/data/adapters/mockAdapter.ts
+src/data/adapters/websocketAdapter.ts
+src/data/adapters/douyinOfficialAdapter.ts
+src/data/adapters/index.ts
+```
+
+adapter 统一接口：
+
+```ts
+interface LiveEventAdapter {
+  readonly name: string;
+  start(): void;
+  stop(): void;
+}
+```
+
+adapter 通过 `LiveEventAdapterCallbacks` 向上层输出统一事件：
+
+```ts
+interface LiveEventAdapterCallbacks {
+  onEvents(events: LiveEvent[]): void;
+  onStatus(status: ConnectionStatus): void;
+  onError(error: Error): void;
+}
+```
+
+官方平台接入流程建议：
+
+```text
+1. 在官方直播开放平台完成开发者资质、应用创建、回调地址、签名密钥等配置。
+2. 在你自己的后端服务接收官方回调/推送，并完成官方要求的验签、鉴权、重放防护和错误响应。
+3. 将验签后的官方回调载荷转换为 DouyinOfficialCallbackEvent。
+4. 调用 mapDouyinOfficialCallbackToLiveEvent() 或 DouyinOfficialAdapter.handleCallback() 转为统一 LiveEvent。
+5. 通过现有 WebSocket adapter 或你新增的官方 adapter 传给本桌面端。
+```
+
+需要开发者根据实际平台资质补充的部分：
+
+```text
+官方应用凭证：appId/clientKey/callbackSecret 等以平台控制台实际字段为准。
+官方回调入口：HTTP 路由、验签、时间戳/nonce 校验、重放防护。
+官方 SDK 或 API 调用：按官方文档实现，不写入私有抓包逻辑。
+部署地址：公网 HTTPS 回调地址、证书、网关和日志审计。
+错误处理策略：官方要求的响应格式、重试处理、限流与告警。
+```
+
+`douyinOfficialAdapter` 当前只实现这些安全边界：
+
+```text
+类型定义：DouyinOfficialAdapterConfig、DouyinOfficialCallbackEvent 等。
+事件映射：comment / like / gift / enter / follow 到统一 LiveEvent。
+配置结构：仅保存官方接入所需的占位配置字段，不假设私有接口。
+回调转换：mapDouyinOfficialCallbackToLiveEvent(callback)。
+```
+
+示例映射：
+
+```ts
+const event = mapDouyinOfficialCallbackToLiveEvent({
+  eventId: 'official-comment-1',
+  eventType: 'comment',
+  timestamp: Date.now(),
+  operator: {
+    openId: 'official-open-id',
+    nickname: '观众昵称'
+  },
+  data: {
+    content: '弹幕内容'
+  },
+  raw: originalOfficialPayload
+});
+```
+
+只要新增平台 adapter 继续输出同一个 `LiveEvent` 模型，悬浮窗 UI 层不需要修改。
 
 ## 8. README
 
