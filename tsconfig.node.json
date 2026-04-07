@@ -12,5 +12,5 @@
     "types": ["node"],
     "outDir": "dist-electron"
   },
-  "include": ["electron", "scripts", "mock-server", "bridge"]
+  "include": ["electron", "scripts", "mock-server", "bridge-service"]
 }

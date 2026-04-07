@@ -40,6 +40,12 @@ let overlayState: OverlayState = {
 const isDev = process.env.NODE_ENV === 'development' || Boolean(process.env.VITE_DEV_SERVER_URL);
 const gotSingleInstanceLock = app.requestSingleInstanceLock();
 
+if (process.platform === 'win32') {
+  app.setAppUserModelId('com.local.douyin-live-overlay-assistant');
+  app.commandLine.appendSwitch('disable-renderer-backgrounding');
+  app.commandLine.appendSwitch('disable-background-timer-throttling');
+}
+
 if (!gotSingleInstanceLock) {
   app.quit();
 }
@@ -168,6 +174,10 @@ function intersects(a: Electron.Rectangle, b: Electron.Rectangle): boolean {
 
 function applyWindowState(win: BrowserWindow, state: OverlayState, config = configStore.get()): void {
   win.setAlwaysOnTop(config.window.alwaysOnTop, 'screen-saver');
+  if (process.platform === 'win32' && config.window.alwaysOnTop) {
+    // Reassert topmost on Windows after focus transitions from borderless games.
+    win.moveTop();
+  }
   win.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
   win.setOpacity(state.opacity);
   win.setIgnoreMouseEvents(state.clickThrough, { forward: true });
@@ -176,6 +186,9 @@ function applyWindowState(win: BrowserWindow, state: OverlayState, config = conf
 
   if (state.visible && !win.isVisible()) {
     win.showInactive();
+  }
+  if (state.visible && win.isVisible() && !state.clickThrough && process.platform === 'win32') {
+    win.focus();
   }
   if (!state.visible && win.isVisible()) {
     win.hide();
@@ -449,12 +462,13 @@ function registerIpc(): void {
 }
 
 function getAppInfo(): AppInfo {
+  const loginItemSettings = process.platform === 'win32' ? app.getLoginItemSettings() : { openAtLogin: false };
   return {
     appVersion: app.getVersion(),
     platform: process.platform,
     configPath: configStore.getPath(),
     logDir: logger.getLogDir(),
-    launchAtLogin: app.getLoginItemSettings().openAtLogin,
+    launchAtLogin: loginItemSettings.openAtLogin,
     hotkeys: hotkeyStatus
   };
 }

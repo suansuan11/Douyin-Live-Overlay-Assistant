@@ -1,10 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { WebSocketServer } from 'ws';
-import { BRIDGE_PROTOCOL, BRIDGE_PROTOCOL_VERSION } from '../src/data/adapters/bridgeAdapter';
-import { normalizeLiveEvent } from '../src/data/eventSchema';
-import { createMockEvent } from '../src/data/mockEvents';
-import type { LiveEvent } from '../src/shared/events';
+import { createBridgeEnvelope, validateLiveEvent, type LiveEvent } from './schema';
 
 interface BridgeCliOptions {
   port: number;
@@ -24,7 +21,7 @@ function parseOptions(): BridgeCliOptions {
 
   return {
     port: Number(args.get('port') ?? process.env.BRIDGE_PORT ?? 17891),
-    filePath: resolve(args.get('file') ?? 'bridge/sample-events.json'),
+    filePath: resolve(args.get('file') ?? 'bridge-service/sample-events.json'),
     intervalMs: Number(args.get('interval') ?? 1000)
   };
 }
@@ -34,15 +31,32 @@ function loadEvents(filePath: string): LiveEvent[] {
   if (!Array.isArray(parsed)) {
     throw new Error('sample event file must be a JSON array');
   }
-  return parsed.flatMap((item) => {
-    const event = normalizeLiveEvent(item);
+  const events = parsed.flatMap((item) => {
+    const event = validateLiveEvent(item);
     return event ? [event] : [];
   });
+  if (events.length === 0) {
+    throw new Error('sample event file does not contain any valid LiveEvent');
+  }
+  return events;
+}
+
+function makeSystemEvent(text: string): LiveEvent {
+  return {
+    eventId: `bridge-system-${Date.now()}`,
+    type: 'system',
+    timestamp: Date.now(),
+    user: {
+      id: 'bridge-service',
+      nickname: 'Bridge Service'
+    },
+    payload: { text }
+  };
 }
 
 const options = parseOptions();
 const configuredEvents = loadEvents(options.filePath);
-const wss = new WebSocketServer({ port: options.port });
+const wss = new WebSocketServer({ port: options.port, host: '127.0.0.1' });
 let cursor = 0;
 
 wss.on('connection', (socket) => {
@@ -50,22 +64,11 @@ wss.on('connection', (socket) => {
     console.log(`overlay client says: ${message.toString()}`);
   });
 
-  socket.send(
-    JSON.stringify({
-      protocol: BRIDGE_PROTOCOL,
-      version: BRIDGE_PROTOCOL_VERSION,
-      events: [
-        {
-          ...createMockEvent('system'),
-          payload: { text: 'Bridge Receiver 已连接' }
-        }
-      ]
-    })
-  );
+  socket.send(JSON.stringify(createBridgeEnvelope([makeSystemEvent('Bridge Receiver 已连接')])));
 });
 
 setInterval(() => {
-  const baseEvent = configuredEvents[cursor % configuredEvents.length] ?? createMockEvent();
+  const baseEvent = configuredEvents[cursor % configuredEvents.length] ?? makeSystemEvent('No sample events available');
   cursor += 1;
   const event: LiveEvent = {
     ...baseEvent,
@@ -73,11 +76,7 @@ setInterval(() => {
     timestamp: Date.now(),
     raw: baseEvent
   };
-  const payload = JSON.stringify({
-    protocol: BRIDGE_PROTOCOL,
-    version: BRIDGE_PROTOCOL_VERSION,
-    events: [event]
-  });
+  const payload = JSON.stringify(createBridgeEnvelope([event]));
 
   for (const client of wss.clients) {
     if (client.readyState === client.OPEN) {

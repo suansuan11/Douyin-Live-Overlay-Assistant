@@ -103,4 +103,24 @@ describe('event pipeline', () => {
 
     expect(pipeline.snapshot().map((event) => event.eventId)).toEqual(['evt-2', 'evt-3', 'evt-4']);
   });
+
+  it('stays bounded under high-frequency input', () => {
+    const pipeline = new EventPipeline({ maxEvents: 500 });
+
+    for (let index = 0; index < 5000; index += 1) {
+      pipeline.ingest(
+        makeEvent({
+          eventId: `burst-${index}`,
+          timestamp: 1710000000000 + index,
+          user: { id: `user-${index % 50}`, nickname: `用户${index % 50}` },
+          payload: { text: `高频消息 ${index}` }
+        })
+      );
+    }
+
+    const snapshot = pipeline.snapshot();
+    expect(snapshot).toHaveLength(500);
+    expect(snapshot[0]?.eventId).toBe('burst-4500');
+    expect(snapshot.at(-1)?.eventId).toBe('burst-4999');
+  });
 });

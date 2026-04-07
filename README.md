@@ -43,7 +43,7 @@ src/
     liveEventClient.ts  adapter 生命周期与事件管线入口
   renderer/             React UI、Zustand store、控制面板、布局
   shared/               配置、IPC、事件共享类型
-bridge/                 Bridge Receiver 示例 server 和 sample-events.json
+bridge-service/         独立 Bridge Receiver 示例服务、schema 校验和 sample-events.json
 mock-server/            Mock WebSocket server
 configs/                示例配置
 tests/                  Vitest 测试
@@ -108,6 +108,14 @@ ws://127.0.0.1:17891
 ```
 
 在 Overlay 编辑模式中选择 `Bridge Receiver`，Bridge 地址填入该 URL。
+
+Bridge 示例服务位于：
+
+```text
+bridge-service/
+```
+
+它是独立 Node.js 实现，不从主工程数据层导入代码，包含 `src/schema.ts` 校验和 `sample-events.json`。
 
 Bridge envelope：
 
@@ -229,7 +237,7 @@ npm run pack
 生成 Windows 安装包和 portable 包：
 
 ```bash
-npm run dist
+npm run dist:win
 ```
 
 产物输出到：
@@ -239,6 +247,24 @@ release/
 ```
 
 Windows 真机建议使用 Windows 10/11 的无边框窗口化游戏模式测试，独占全屏游戏通常不保证被普通桌面 Overlay 覆盖。
+
+Windows 使用建议：
+
+```text
+1. 安装或启动应用后，先按 Ctrl+Alt+L 进入编辑模式。
+2. 把 Overlay 拖到游戏画面附近，设置透明度、字号和布局。
+3. 再按 Ctrl+Alt+L 回到直播穿透模式，确认鼠标点击能落到游戏窗口。
+4. 游戏使用“无边框窗口化/窗口化全屏”，不要使用独占全屏。
+5. 如果热键被游戏拦截，在设置面板查看热键状态并修改配置。
+```
+
+OBS/直播场景推荐：
+
+```text
+游戏窗口：无边框窗口化。
+Overlay：直播穿透模式，保持 alwaysOnTop。
+OBS：优先采集显示器或游戏窗口化画面；如果 OBS 不能捕获透明悬浮窗，请改用显示器采集或把 Bridge 数据接入 OBS 自己的浏览器源。
+```
 
 ## 测试
 
@@ -252,7 +278,9 @@ npm run typecheck
 ```text
 事件 schema / pipeline / 去重 / 点赞聚合开关
 adapter factory / douyinOfficial 映射
-Bridge envelope 解析
+Bridge envelope 解析 / 独立 bridge-service schema 校验
+WebSocket 重连
+高频事件输入下的 ring buffer 稳定性
 配置迁移和数值约束
 renderer 事件过滤逻辑
 ```
@@ -313,5 +341,5 @@ Bridge 无事件：
 
 ```text
 先运行 npm run typecheck 和 npm test。
-Windows 安装包建议在 Windows 机器上执行 npm run dist。
+Windows 安装包建议在 Windows 机器上执行 npm run dist:win。
 ```
