@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { useLiveEventSource } from './hooks/useLiveEventSource';
 import { applyEventFilters, useAppStore } from './store';
 import type { AppConfig, DataSourceMode, OverlayLayout, ShowOnlyFilter } from '../shared/config';
@@ -209,41 +209,79 @@ function ListLayout({
   onPausedChange(value: boolean): void;
 }) {
   const visibleEvents = useMemo(() => applyEventFilters(events, config).slice(-200), [events, config]);
+  const lastVisibleEventKey = visibleEvents.length > 0 ? eventKey(visibleEvents[visibleEvents.length - 1]) : '';
   const listRef = useRef<HTMLElement | null>(null);
-  const previousLengthRef = useRef(visibleEvents.length);
+  const previousLengthRef = useRef(0);
+  const previousLastKeyRef = useRef('');
+  const hasInitialScrolledRef = useRef(false);
+  const shouldFollowBottomRef = useRef(true);
   const [isNearBottom, setIsNearBottom] = useState(true);
   const [newCount, setNewCount] = useState(0);
+
+  const isListNearBottom = (list: HTMLElement): boolean => {
+    return list.scrollHeight - list.scrollTop - list.clientHeight < 160;
+  };
 
   const jumpToBottom = (): void => {
     const list = listRef.current;
     if (!list) return;
-    list.scrollTop = list.scrollHeight;
+    list.scrollTop = Math.max(0, list.scrollHeight - list.clientHeight);
+    shouldFollowBottomRef.current = true;
     setIsNearBottom(true);
     setNewCount(0);
+  };
+
+  const scheduleJumpToBottom = (): void => {
+    requestAnimationFrame(() => {
+      jumpToBottom();
+      requestAnimationFrame(jumpToBottom);
+    });
   };
 
   const handleScroll = (): void => {
     const list = listRef.current;
     if (!list) return;
-    const nearBottom = list.scrollHeight - list.scrollTop - list.clientHeight < 48;
+    const nearBottom = isListNearBottom(list);
+    shouldFollowBottomRef.current = nearBottom;
     setIsNearBottom(nearBottom);
     if (nearBottom) {
       setNewCount(0);
     }
   };
 
-  useEffect(() => {
+  useLayoutEffect(() => {
+    if (!hasInitialScrolledRef.current && visibleEvents.length > 0) {
+      scheduleJumpToBottom();
+      previousLengthRef.current = visibleEvents.length;
+      previousLastKeyRef.current = lastVisibleEventKey;
+      hasInitialScrolledRef.current = true;
+    }
+  }, [lastVisibleEventKey, visibleEvents.length]);
+
+  useLayoutEffect(() => {
     const previousLength = previousLengthRef.current;
+    const previousLastKey = previousLastKeyRef.current;
     const nextLength = visibleEvents.length;
-    if (nextLength > previousLength) {
-      if (config.overlay.autoScroll && isNearBottom) {
-        requestAnimationFrame(jumpToBottom);
+    const hasNewTailEvent = lastVisibleEventKey !== '' && lastVisibleEventKey !== previousLastKey;
+    if (nextLength > previousLength || (nextLength === previousLength && hasNewTailEvent)) {
+      if (config.overlay.autoScroll && shouldFollowBottomRef.current) {
+        scheduleJumpToBottom();
       } else {
-        setNewCount((count) => count + nextLength - previousLength);
+        setNewCount((count) => count + Math.max(1, nextLength - previousLength));
       }
+    } else if (nextLength === 0) {
+      hasInitialScrolledRef.current = false;
+      shouldFollowBottomRef.current = true;
     }
     previousLengthRef.current = nextLength;
-  }, [visibleEvents.length, config.overlay.autoScroll, isNearBottom]);
+    previousLastKeyRef.current = lastVisibleEventKey;
+  }, [lastVisibleEventKey, visibleEvents.length, config.overlay.autoScroll]);
+
+  useLayoutEffect(() => {
+    if (config.overlay.autoScroll && shouldFollowBottomRef.current) {
+      scheduleJumpToBottom();
+    }
+  }, [config.overlay.autoScroll]);
 
   if (visibleEvents.length === 0) return <EmptyState mode={config.data.mode} />;
 

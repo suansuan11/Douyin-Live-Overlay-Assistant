@@ -29,6 +29,7 @@ let configStore: ConfigStore;
 let logger: AppLogger;
 let isQuitting = false;
 let hotkeyStatus: HotkeyRegistrationStatus[] = [];
+let registeredHotkeySignature = '';
 let overlayState: OverlayState = {
   visible: migrateConfig(undefined).window.visible,
   clickThrough: migrateConfig(undefined).window.clickThrough,
@@ -282,8 +283,14 @@ function broadcastConfig(config = configStore.get()): void {
 }
 
 function registerHotkeys(config: AppConfig): void {
+  const hotkeySignature = JSON.stringify(config.hotkeys);
+  if (hotkeySignature === registeredHotkeySignature && hotkeyStatus.length > 0) {
+    return;
+  }
+
   globalShortcut.unregisterAll();
   hotkeyStatus = [];
+  registeredHotkeySignature = hotkeySignature;
 
   const bind = (action: string, accelerator: string, callback: () => void): void => {
     const ok = accelerator.trim().length > 0 && globalShortcut.register(accelerator, callback);
