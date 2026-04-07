@@ -1,4 +1,11 @@
 {
+  "version": 2,
+  "app": {
+    "launchAtLogin": false,
+    "closeToTray": true,
+    "minimizeToTray": true,
+    "startHidden": false
+  },
   "window": {
     "x": 80,
     "y": 80,
@@ -14,15 +21,21 @@
     "fontSize": 16,
     "scale": 1,
     "maxEvents": 500,
+    "pauseScroll": false,
     "filters": {
       "blockedKeywords": ["广告", "刷屏"],
       "highlightKeywords": ["老板", "主播"],
       "showOnly": "all"
+    },
+    "likeAggregation": {
+      "enabled": true,
+      "windowMs": 1200
     }
   },
   "data": {
+    "mode": "mock",
     "wsUrl": "ws://127.0.0.1:17890",
-    "mockMode": true,
+    "bridgeUrl": "ws://127.0.0.1:17891",
     "reconnectMinMs": 500,
     "reconnectMaxMs": 10000
   },

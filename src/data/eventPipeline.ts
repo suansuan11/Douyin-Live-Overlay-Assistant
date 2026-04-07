@@ -5,12 +5,14 @@ export interface EventPipelineOptions {
   maxEvents: number;
   duplicateTtlMs: number;
   likeAggregateWindowMs: number;
+  likeAggregationEnabled: boolean;
 }
 
 const DEFAULT_PIPELINE_OPTIONS: EventPipelineOptions = {
   maxEvents: 500,
   duplicateTtlMs: 60_000,
-  likeAggregateWindowMs: 1_200
+  likeAggregateWindowMs: 1_200,
+  likeAggregationEnabled: true
 };
 
 export class EventPipeline {
@@ -54,7 +56,7 @@ export class EventPipeline {
   }
 
   private tryMergeLike(event: LiveEvent): LiveEvent | null {
-    if (event.type !== 'like') {
+    if (!this.options.likeAggregationEnabled || event.type !== 'like') {
       return null;
     }
 

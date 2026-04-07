@@ -29,11 +29,12 @@ function eventContainsKeyword(event: LiveEvent, keywords: readonly string[]): bo
   return keywords.some((keyword) => keyword && haystack.includes(keyword));
 }
 
-function applyFilters(events: readonly LiveEvent[], config: AppConfig): LiveEvent[] {
+export function applyEventFilters(events: readonly LiveEvent[], config: AppConfig): LiveEvent[] {
   const { filters } = config.overlay;
   return events.filter((event) => {
     if (filters.showOnly === 'comments' && event.type !== 'comment') return false;
     if (filters.showOnly === 'gifts' && event.type !== 'gift') return false;
+    if (filters.showOnly === 'system' && event.type !== 'system') return false;
     if (eventContainsKeyword(event, filters.blockedKeywords)) return false;
     return true;
   });
@@ -66,7 +67,10 @@ export const useAppStore = create<AppStore>((set) => ({
   setConnection: (connection) => set({ connection }),
   pushEvents: (incoming) =>
     set((state) => {
-      const filtered = applyFilters(incoming, state.config);
+      if (state.config.overlay.pauseScroll) {
+        return state;
+      }
+      const filtered = applyEventFilters(incoming, state.config);
       if (filtered.length === 0) {
         return state;
       }

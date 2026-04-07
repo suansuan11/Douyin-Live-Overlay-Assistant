@@ -1,13 +1,17 @@
 import { EventPipeline } from './eventPipeline';
 import { createAdapter, type LiveEventAdapter, type LiveEventAdapterConfig } from './adapters';
+import type { DataSourceMode } from '../shared/config';
 import type { ConnectionStatus, LiveEvent } from '../shared/events';
 
 export interface LiveEventClientOptions {
+  mode: DataSourceMode;
   wsUrl: string;
-  mockMode: boolean;
+  bridgeUrl: string;
   maxEvents: number;
   reconnectMinMs: number;
   reconnectMaxMs: number;
+  likeAggregationEnabled: boolean;
+  likeAggregateWindowMs: number;
 }
 
 export interface LiveEventClientCallbacks {
@@ -17,7 +21,7 @@ export interface LiveEventClientCallbacks {
 }
 
 export class LiveEventClient {
-  private readonly pipeline: EventPipeline;
+  private pipeline: EventPipeline;
   private readonly callbacks: LiveEventClientCallbacks;
   private options: LiveEventClientOptions;
   private adapter: LiveEventAdapter | null = null;
@@ -26,7 +30,11 @@ export class LiveEventClient {
   constructor(options: LiveEventClientOptions, callbacks: LiveEventClientCallbacks) {
     this.options = options;
     this.callbacks = callbacks;
-    this.pipeline = new EventPipeline({ maxEvents: options.maxEvents });
+    this.pipeline = new EventPipeline({
+      maxEvents: options.maxEvents,
+      likeAggregationEnabled: options.likeAggregationEnabled,
+      likeAggregateWindowMs: options.likeAggregateWindowMs
+    });
   }
 
   start(): void {
@@ -48,13 +56,25 @@ export class LiveEventClient {
   updateOptions(options: LiveEventClientOptions): void {
     const changed =
       options.wsUrl !== this.options.wsUrl ||
-      options.mockMode !== this.options.mockMode ||
-      options.maxEvents !== this.options.maxEvents;
+      options.bridgeUrl !== this.options.bridgeUrl ||
+      options.mode !== this.options.mode ||
+      options.maxEvents !== this.options.maxEvents ||
+      options.likeAggregationEnabled !== this.options.likeAggregationEnabled ||
+      options.likeAggregateWindowMs !== this.options.likeAggregateWindowMs;
     this.options = options;
+    this.pipeline = this.createPipeline(options);
     if (changed && !this.stopped) {
       this.stop();
       this.start();
     }
+  }
+
+  private createPipeline(options: LiveEventClientOptions): EventPipeline {
+    return new EventPipeline({
+      maxEvents: options.maxEvents,
+      likeAggregationEnabled: options.likeAggregationEnabled,
+      likeAggregateWindowMs: options.likeAggregateWindowMs
+    });
   }
 
   private emitNormalized(input: unknown): void {
@@ -65,9 +85,22 @@ export class LiveEventClient {
   }
 
   private createAdapterConfig(): LiveEventAdapterConfig {
-    if (this.options.mockMode) {
+    if (this.options.mode === 'mock') {
       return {
         kind: 'mock'
+      };
+    }
+    if (this.options.mode === 'bridge') {
+      return {
+        kind: 'bridge',
+        wsUrl: this.options.bridgeUrl,
+        reconnectMinMs: this.options.reconnectMinMs,
+        reconnectMaxMs: this.options.reconnectMaxMs
+      };
+    }
+    if (this.options.mode === 'douyinOfficial') {
+      return {
+        kind: 'douyinOfficial'
       };
     }
     return {

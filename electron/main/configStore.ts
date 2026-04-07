@@ -1,7 +1,7 @@
 import { app } from 'electron';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
-import { DEFAULT_CONFIG, type AppConfig } from '../../src/shared/config';
+import { migrateConfig, type AppConfig } from '../../src/shared/config';
 
 type JsonObject = Record<string, unknown>;
 
@@ -36,22 +36,41 @@ export class ConfigStore {
     return structuredClone(this.config);
   }
 
+  getPath(): string {
+    return this.filePath;
+  }
+
   update(patch: Partial<AppConfig>): AppConfig {
-    this.config = mergeDeep(this.config as unknown as JsonObject, patch) as unknown as AppConfig;
+    this.config = migrateConfig(mergeDeep(this.config as unknown as JsonObject, patch));
+    this.save();
+    return this.get();
+  }
+
+  replace(next: unknown): AppConfig {
+    this.config = migrateConfig(next);
     this.save();
     return this.get();
   }
 
   private load(): AppConfig {
     if (!existsSync(this.filePath)) {
-      return structuredClone(DEFAULT_CONFIG);
+      const config = migrateConfig(undefined);
+      this.config = config;
+      this.save();
+      return config;
     }
 
     try {
       const raw = JSON.parse(readFileSync(this.filePath, 'utf8')) as unknown;
-      return mergeDeep(DEFAULT_CONFIG as unknown as JsonObject, raw) as unknown as AppConfig;
+      const config = migrateConfig(raw);
+      this.config = config;
+      this.save();
+      return config;
     } catch {
-      return structuredClone(DEFAULT_CONFIG);
+      const config = migrateConfig(undefined);
+      this.config = config;
+      this.save();
+      return config;
     }
   }
 

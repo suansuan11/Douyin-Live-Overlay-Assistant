@@ -2,16 +2,28 @@ import { normalizeLiveEvent } from '../eventSchema';
 import type { LiveEvent } from '../../shared/events';
 import type { LiveEventAdapter, LiveEventAdapterCallbacks, WebSocketAdapterConfig } from './types';
 
+export interface SocketAdapterConfig {
+  wsUrl: string;
+  reconnectMinMs?: number;
+  reconnectMaxMs?: number;
+}
+
+export interface WebSocketAdapterRuntimeOptions {
+  normalizeMessage?: (input: unknown) => LiveEvent[];
+  helloMessage?: unknown;
+}
+
 export class WebSocketAdapter implements LiveEventAdapter {
-  readonly name = 'websocket';
+  readonly name: string = 'websocket';
   private socket: WebSocket | null = null;
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private stopped = true;
   private retryAttempt = 0;
 
   constructor(
-    private readonly config: WebSocketAdapterConfig,
-    private readonly callbacks: LiveEventAdapterCallbacks
+    private readonly config: SocketAdapterConfig,
+    private readonly callbacks: LiveEventAdapterCallbacks,
+    private readonly runtimeOptions: WebSocketAdapterRuntimeOptions = {}
   ) {}
 
   start(): void {
@@ -46,6 +58,9 @@ export class WebSocketAdapter implements LiveEventAdapter {
 
     this.socket.addEventListener('open', () => {
       this.retryAttempt = 0;
+      if (this.runtimeOptions.helloMessage !== undefined) {
+        this.socket?.send(JSON.stringify(this.runtimeOptions.helloMessage));
+      }
       this.callbacks.onStatus({
         connected: true,
         connecting: false,
@@ -77,9 +92,11 @@ export class WebSocketAdapter implements LiveEventAdapter {
     const text = typeof data === 'string' ? data : String(data);
     try {
       const parsed = JSON.parse(text) as unknown;
-      const events = Array.isArray(parsed)
-        ? parsed.flatMap((item) => this.normalizeOne(item))
-        : this.normalizeOne(parsed);
+      const events = this.runtimeOptions.normalizeMessage
+        ? this.runtimeOptions.normalizeMessage(parsed)
+        : Array.isArray(parsed)
+          ? parsed.flatMap((item) => this.normalizeOne(item))
+          : this.normalizeOne(parsed);
       if (events.length > 0) {
         this.callbacks.onEvents(events);
       }

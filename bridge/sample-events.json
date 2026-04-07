@@ -1,0 +1,40 @@
+[
+  {
+    "eventId": "sample-comment-1",
+    "type": "comment",
+    "timestamp": 1710000000000,
+    "user": {
+      "id": "bridge-user-1",
+      "nickname": "桥接观众",
+      "fansLevel": 12
+    },
+    "payload": {
+      "text": "这是一条来自 Bridge 的弹幕"
+    }
+  },
+  {
+    "eventId": "sample-like-1",
+    "type": "like",
+    "timestamp": 1710000001000,
+    "user": {
+      "id": "bridge-user-2",
+      "nickname": "点赞观众"
+    },
+    "payload": {
+      "likeCount": 8
+    }
+  },
+  {
+    "eventId": "sample-gift-1",
+    "type": "gift",
+    "timestamp": 1710000002000,
+    "user": {
+      "id": "bridge-user-3",
+      "nickname": "送礼观众"
+    },
+    "payload": {
+      "giftName": "小心心",
+      "giftCount": 3
+    }
+  }
+]

@@ -66,6 +66,29 @@ describe('event pipeline', () => {
     expect(pipeline.snapshot()).toHaveLength(1);
   });
 
+  it('can disable like aggregation', () => {
+    const pipeline = new EventPipeline({ likeAggregationEnabled: false });
+
+    pipeline.ingest(
+      makeEvent({
+        eventId: 'like-no-merge-1',
+        type: 'like',
+        timestamp: 1000,
+        payload: { likeCount: 2 }
+      })
+    );
+    pipeline.ingest(
+      makeEvent({
+        eventId: 'like-no-merge-2',
+        type: 'like',
+        timestamp: 1100,
+        payload: { likeCount: 3 }
+      })
+    );
+
+    expect(pipeline.snapshot().map((event) => event.payload.likeCount)).toEqual([2, 3]);
+  });
+
   it('keeps only maxEvents recent events', () => {
     const pipeline = new EventPipeline({ maxEvents: 3 });
     for (let index = 0; index < 5; index += 1) {

@@ -22,7 +22,8 @@ body,
 
 button,
 input,
-select {
+select,
+textarea {
   font: inherit;
 }
 
@@ -87,11 +88,36 @@ select {
   color: rgba(255, 255, 255, 0.54);
 }
 
+.status-panel {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.62);
+}
+
+.status-panel span {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.24);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.error-text {
+  color: #ff9aac;
+}
+
 .control-panel {
   -webkit-app-region: no-drag;
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px 10px;
+  max-height: 54vh;
+  overflow: auto;
   padding: 10px;
   border-radius: 14px;
   background: rgba(0, 0, 0, 0.34);
@@ -103,6 +129,21 @@ select {
   gap: 4px;
   font-size: 0.74rem;
   color: rgba(255, 255, 255, 0.68);
+}
+
+.control-group {
+  display: grid;
+  gap: 6px;
+}
+
+.control-title {
+  color: rgba(255, 255, 255, 0.76);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.full-row {
+  grid-column: 1 / -1;
 }
 
 .inline-control {
@@ -127,12 +168,25 @@ select {
 }
 
 button,
-select {
+select,
+input,
+textarea {
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 10px;
   background: rgba(255, 255, 255, 0.09);
   color: rgba(255, 255, 255, 0.9);
   padding: 5px 9px;
+}
+
+textarea {
+  min-height: 54px;
+  resize: vertical;
+}
+
+input[type="checkbox"] {
+  width: 14px;
+  height: 14px;
+  padding: 0;
 }
 
 button.active,
@@ -148,6 +202,7 @@ input[type="range"] {
 .overlay-content {
   flex: 1;
   min-height: 0;
+  overflow: hidden;
 }
 
 .event-list {
@@ -202,6 +257,10 @@ input[type="range"] {
   color: rgba(255, 255, 255, 0.88);
   line-height: 1.35;
   word-break: break-word;
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
 }
 
 .gift-layout {
@@ -245,6 +304,40 @@ input[type="range"] {
 .last-event {
   border-radius: 14px;
   line-height: 1.35;
+}
+
+.empty-state,
+.notice,
+.meta-panel {
+  display: grid;
+  gap: 5px;
+  padding: 10px;
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  color: rgba(255, 255, 255, 0.68);
+  font-size: 0.76rem;
+}
+
+.empty-state {
+  height: 100%;
+  place-content: center;
+  text-align: center;
+}
+
+.notice {
+  color: rgba(255, 220, 160, 0.86);
+  border-color: rgba(255, 200, 120, 0.18);
+}
+
+.meta-panel {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.meta-panel span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 @keyframes event-in {

@@ -12,17 +12,23 @@ export function useLiveEventSource(config: AppConfig): void {
 
   const clientOptions = useMemo(
     () => ({
+      mode: config.data.mode,
       wsUrl: config.data.wsUrl,
-      mockMode: config.data.mockMode,
+      bridgeUrl: config.data.bridgeUrl,
       maxEvents: config.overlay.maxEvents,
       reconnectMinMs: config.data.reconnectMinMs,
-      reconnectMaxMs: config.data.reconnectMaxMs
+      reconnectMaxMs: config.data.reconnectMaxMs,
+      likeAggregationEnabled: config.overlay.likeAggregation.enabled,
+      likeAggregateWindowMs: config.overlay.likeAggregation.windowMs
     }),
     [
-      config.data.mockMode,
+      config.data.mode,
+      config.data.bridgeUrl,
       config.data.reconnectMaxMs,
       config.data.reconnectMinMs,
       config.data.wsUrl,
+      config.overlay.likeAggregation.enabled,
+      config.overlay.likeAggregation.windowMs,
       config.overlay.maxEvents
     ]
   );

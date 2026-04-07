@@ -20,6 +20,7 @@ describe('adapter factory', () => {
 
     expect(createAdapter({ kind: 'mock', intervalMs: 10 }, callbacks).name).toBe('mock');
     expect(createAdapter({ kind: 'websocket', wsUrl: 'ws://127.0.0.1:17890' }, callbacks).name).toBe('websocket');
+    expect(createAdapter({ kind: 'bridge', wsUrl: 'ws://127.0.0.1:17891' }, callbacks).name).toBe('bridge');
     expect(createAdapter({ kind: 'douyinOfficial', appId: 'app-id' }, callbacks).name).toBe('douyinOfficial');
   });
 });

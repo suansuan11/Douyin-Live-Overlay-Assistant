@@ -25,14 +25,31 @@ export interface WebSocketAdapterConfig {
   reconnectMaxMs?: number;
 }
 
+export interface BridgeAdapterConfig {
+  kind: 'bridge';
+  wsUrl: string;
+  reconnectMinMs?: number;
+  reconnectMaxMs?: number;
+}
+
 export interface DouyinOfficialAdapterConfig {
   kind: 'douyinOfficial';
+  /**
+   * Placeholder configuration only. Values and verification must follow the
+   * official live platform documentation available to the app owner.
+   */
   appId?: string;
   clientKey?: string;
   callbackSecret?: string;
+  callbackUrl?: string;
+  verifySignature?: boolean;
   enabledEventTypes?: DouyinOfficialSupportedEventType[];
 }
 
 export type DouyinOfficialSupportedEventType = Exclude<LiveEventType, 'system'>;
 
-export type LiveEventAdapterConfig = MockAdapterConfig | WebSocketAdapterConfig | DouyinOfficialAdapterConfig;
+export type LiveEventAdapterConfig =
+  | MockAdapterConfig
+  | WebSocketAdapterConfig
+  | BridgeAdapterConfig
+  | DouyinOfficialAdapterConfig;
