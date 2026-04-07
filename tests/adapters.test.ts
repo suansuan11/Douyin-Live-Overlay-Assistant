@@ -114,4 +114,29 @@ describe('douyin official adapter mapping', () => {
 
     expect(mapDouyinOfficialCallbackToLiveEvent(callback)).toBeNull();
   });
+
+  it('maps official fans club callback payloads', () => {
+    const callback: DouyinOfficialCallbackEvent = {
+      eventId: 'official-fans-club-1',
+      eventType: 'fans_club',
+      timestamp: 1710000000800,
+      operator: {
+        openId: 'open-user-5',
+        nickname: '粉丝团用户'
+      },
+      data: {
+        content: '加入粉丝团',
+        fansClubLevel: 7
+      }
+    };
+
+    expect(mapDouyinOfficialCallbackToLiveEvent(callback)).toMatchObject({
+      eventId: 'official-fans-club-1',
+      type: 'fans_club',
+      payload: {
+        text: '加入粉丝团',
+        fansClubLevel: 7
+      }
+    });
+  });
 });

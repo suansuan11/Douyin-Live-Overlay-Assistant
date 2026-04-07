@@ -1,4 +1,4 @@
-export type LiveEventType = 'comment' | 'gift' | 'like' | 'enter' | 'follow' | 'system';
+export type LiveEventType = 'comment' | 'gift' | 'like' | 'enter' | 'follow' | 'fans_club' | 'system';
 
 export interface LiveEventUser {
   id: string;
@@ -12,6 +12,9 @@ export interface LiveEventPayload {
   giftName?: string;
   giftCount?: number;
   likeCount?: number;
+  totalLikeCount?: number;
+  fansClubLevel?: number;
+  followAction?: 'follow' | 'unfollow';
 }
 
 export interface LiveEvent {
@@ -36,6 +39,7 @@ export const LIVE_EVENT_TYPES: readonly LiveEventType[] = [
   'like',
   'enter',
   'follow',
+  'fans_club',
   'system'
 ];
 

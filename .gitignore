@@ -2,6 +2,7 @@ node_modules/
 dist/
 dist-electron/
 release/
+plugin-bridge-helper/
 coverage/
 *.log
 .DS_Store

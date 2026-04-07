@@ -11,6 +11,7 @@ function formatEvent(event: LiveEvent): string {
   if (event.type === 'like') return `点赞 x${event.payload.likeCount ?? 1}`;
   if (event.type === 'enter') return event.payload.text ?? '进入直播间';
   if (event.type === 'follow') return event.payload.text ?? '关注了主播';
+  if (event.type === 'fans_club') return `粉丝团 Lv.${event.payload.fansClubLevel ?? 0}`;
   return event.payload.text ?? '系统事件';
 }
 
@@ -22,7 +23,7 @@ function modeLabel(mode: DataSourceMode): string {
 }
 
 function isHighlighted(event: LiveEvent, config: AppConfig): boolean {
-  if (event.type === 'gift' || event.type === 'follow') return true;
+  if (event.type === 'gift' || event.type === 'follow' || event.type === 'fans_club') return true;
   const text = `${event.user.nickname} ${event.payload.text ?? ''} ${event.payload.giftName ?? ''}`;
   return config.overlay.filters.highlightKeywords.some((keyword) => keyword && text.includes(keyword));
 }
@@ -96,10 +97,11 @@ function MinimalLayout({ events, config }: { events: LiveEvent[]; config: AppCon
         if (event.type === 'gift') acc.gifts += event.payload.giftCount ?? 1;
         if (event.type === 'like') acc.likes += event.payload.likeCount ?? 1;
         if (event.type === 'follow') acc.follows += 1;
+        if (event.type === 'fans_club') acc.fansClub += 1;
         if (event.type === 'system') acc.system += 1;
         return acc;
       },
-      { comments: 0, gifts: 0, likes: 0, follows: 0, system: 0 }
+      { comments: 0, gifts: 0, likes: 0, follows: 0, fansClub: 0, system: 0 }
     );
   }, [events]);
 
@@ -113,6 +115,7 @@ function MinimalLayout({ events, config }: { events: LiveEvent[]; config: AppCon
       <div className="stat-line">
         <span>礼物 {stats.gifts}</span>
         <span>关注 {stats.follows}</span>
+        <span>粉丝团 {stats.fansClub}</span>
       </div>
       {last ? <div className="last-event">{last.user.nickname}: {formatEvent(last)}</div> : <EmptyState mode={config.data.mode} />}
     </section>

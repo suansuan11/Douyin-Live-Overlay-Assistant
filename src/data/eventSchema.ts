@@ -26,11 +26,17 @@ function normalizePayload(value: unknown): LiveEvent['payload'] {
   const giftName = readString(value, 'giftName');
   const giftCount = readNumber(value, 'giftCount');
   const likeCount = readNumber(value, 'likeCount');
+  const totalLikeCount = readNumber(value, 'totalLikeCount');
+  const fansClubLevel = readNumber(value, 'fansClubLevel');
+  const followAction = readString(value, 'followAction');
 
   if (text !== undefined) payload.text = text;
   if (giftName !== undefined) payload.giftName = giftName;
   if (giftCount !== undefined) payload.giftCount = giftCount;
   if (likeCount !== undefined) payload.likeCount = likeCount;
+  if (totalLikeCount !== undefined) payload.totalLikeCount = totalLikeCount;
+  if (fansClubLevel !== undefined) payload.fansClubLevel = fansClubLevel;
+  if (followAction === 'follow' || followAction === 'unfollow') payload.followAction = followAction;
 
   return payload;
 }

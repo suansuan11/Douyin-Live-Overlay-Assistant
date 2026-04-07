@@ -44,6 +44,7 @@ src/
   renderer/             React UI、Zustand store、控制面板、布局
   shared/               配置、IPC、事件共享类型
 bridge-service/         独立 Bridge Receiver 示例服务、schema 校验和 sample-events.json
+plugin-bridge-helper/   Windows C++17 直播伴侣互动插件 helper，桥接官方 PipeSDK 到 overlay
 mock-server/            Mock WebSocket server
 configs/                示例配置
 tests/                  Vitest 测试
@@ -166,6 +167,24 @@ Bridge envelope：
 ```
 
 ## 官方平台接入边界
+
+如果要走“仅直播伴侣 + exe 包体”的官方互动插件路线，请使用新增的独立工程：
+
+```text
+plugin-bridge-helper/
+```
+
+它不重写 overlay，也不把官方 PipeSDK 逻辑塞进 Electron 主进程。目标链路是：
+
+```text
+抖音直播伴侣 -> plugin-bridge-helper.exe -> ws://127.0.0.1:17891 -> Overlay Bridge Receiver
+```
+
+详细构建、PipeSDK 放置、直播伴侣调试面板联调和能力 gating 说明见：
+
+```text
+plugin-bridge-helper/README.md
+```
 
 相关文件：
 

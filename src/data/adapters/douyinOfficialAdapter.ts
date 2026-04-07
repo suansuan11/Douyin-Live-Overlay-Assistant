@@ -20,6 +20,7 @@ export interface DouyinOfficialCallbackData {
   giftName?: string;
   giftCount?: number;
   likeCount?: number;
+  fansClubLevel?: number;
 }
 
 export interface DouyinOfficialCallbackEvent {
@@ -36,7 +37,8 @@ const EVENT_TYPE_MAP: Record<DouyinOfficialSupportedEventType, LiveEventType> = 
   gift: 'gift',
   like: 'like',
   enter: 'enter',
-  follow: 'follow'
+  follow: 'follow',
+  fans_club: 'fans_club'
 };
 
 export function mapDouyinOfficialCallbackToLiveEvent(callback: DouyinOfficialCallbackEvent): LiveEvent | null {
@@ -73,6 +75,9 @@ export function mapDouyinOfficialCallbackToLiveEvent(callback: DouyinOfficialCal
   }
   if (callback.data.likeCount !== undefined) {
     liveEvent.payload.likeCount = callback.data.likeCount;
+  }
+  if (callback.data.fansClubLevel !== undefined) {
+    liveEvent.payload.fansClubLevel = callback.data.fansClubLevel;
   }
 
   return liveEvent;

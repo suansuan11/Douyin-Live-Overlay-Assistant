@@ -31,6 +31,27 @@ describe('live event schema', () => {
     expect(normalizeLiveEvent({ ...makeEvent(), type: 'unknown' })).toBeNull();
     expect(parseLiveEventJson('{bad-json')).toBeNull();
   });
+
+  it('accepts bridge helper extended payload fields', () => {
+    expect(
+      normalizeLiveEvent(
+        makeEvent({
+          type: 'fans_club',
+          payload: {
+            text: '加入粉丝团',
+            totalLikeCount: 1200,
+            fansClubLevel: 5,
+            followAction: 'follow'
+          }
+        })
+      )?.payload
+    ).toEqual({
+      text: '加入粉丝团',
+      totalLikeCount: 1200,
+      fansClubLevel: 5,
+      followAction: 'follow'
+    });
+  });
 });
 
 describe('event pipeline', () => {
