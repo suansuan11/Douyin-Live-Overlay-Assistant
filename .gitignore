@@ -1,0 +1,29 @@
+node_modules/
+dist/
+dist-electron/
+release/
+coverage/
+*.log
+.DS_Store
+.env
+.env.local
+*.tsbuildinfo
+
+# Electron
+electron-builder.yml
+*.asar
+.electron/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+Thumbs.db
+
+# Build outputs
+out/
+build/
+.nyc_output/
